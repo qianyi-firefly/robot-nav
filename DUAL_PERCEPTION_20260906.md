@@ -7,7 +7,7 @@
 ## 可回退版本
 
 - 修改前提交：`e0cbf761d6920e7cc680830115ec0cf6ec28186d`。
-- GitHub 分支：[backup/optimized-20260906-before-dual-perception](https://github.com/Doribelove/autolabor-robot-nav/tree/backup/optimized-20260906-before-dual-perception)。
+- 修改前源码备份分支：`backup/optimized-20260906-before-dual-perception`。
 - 标签：`before-dual-perception-20260906`；远端分支和标签已核对。
 - 本地：`runtime/backups/before_dual_perception_20260906/`，包括独立解压副本 `project/`、
   `project_before.tar.gz`、`source_history.bundle`、配置、授权标记副本、J6M 旧版本记录。
