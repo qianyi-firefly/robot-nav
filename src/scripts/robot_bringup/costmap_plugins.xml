@@ -1,0 +1,16 @@
+<library path="lib/libgps_geofence_layer">
+  <class name="robot_bringup/GpsGeofenceLayer"
+         type="robot_bringup::GpsGeofenceLayer"
+         base_class_type="costmap_2d::Layer">
+    <description>
+      Marks locally stored GPS keepout polygons and their hard margin as lethal costmap obstacles.
+    </description>
+  </class>
+  <class name="robot_bringup/UnknownSpaceGuardLayer"
+         type="robot_bringup::UnknownSpaceGuardLayer"
+         base_class_type="costmap_2d::Layer">
+    <description>
+      Reapplies static-map unknown and outside-map cells as NO_INFORMATION after all clearing layers.
+    </description>
+  </class>
+</library>

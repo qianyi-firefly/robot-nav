@@ -1,0 +1,41 @@
+confidence: 0.20
+iou: 0.45
+image_size: 640
+max_detections: 100
+device: auto
+half: true
+warmup: true
+debug_every_n: 1
+smoke_test_only: true
+required_class_names: fod
+
+# Registered metric depth is opt-in so legacy video/webcam smoke tests keep
+# working. The ZED production launch overrides this to true.
+enable_depth_fusion: false
+depth_topic: /fod_camera/depth_registered
+depth_sync_tolerance_sec: 0.06
+depth_wait_sec: 0.03
+depth_min_m: 0.30
+depth_max_m: 15.0
+depth_min_samples: 20
+depth_min_valid_fraction: 0.20
+depth_bbox_inset_fraction: 0.18
+
+# LocateAnything is recognition-only, so this second depth path feeds only
+# /fod/vision/results for Qt display.  The 120-unique-frame bounded history
+# covers the model's measured multi-second inference time; repeated ZED
+# CameraInfo stamps are deduplicated.  RGB source stamp and optical frame must
+# still match registered depth and CameraInfo.
+display_depth:
+  enabled: true
+  depth_topic: /fod_camera/depth_registered
+  camera_info_topic: /fod_camera/camera_info
+  sync_tolerance_sec: 0.06
+  wait_sec: 0.03
+  buffer_size: 120
+  min_m: 0.30
+  max_m: 15.0
+  min_samples: 20
+  min_valid_fraction: 0.12
+  bbox_inset_fraction: 0.10
+  aggregation: median

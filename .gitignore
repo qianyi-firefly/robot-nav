@@ -1,0 +1,53 @@
+/build/
+/devel/
+/install/
+/log/
+/runtime/
+/config/dual_host.env
+*.bag
+*.bag.active
+*.pcd
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.idea/
+.vscode/
+.DS_Store
+/YOLODATABASE/
+/src/sweeper_mcp/config/sweeper_mcp.yaml
+# Reproducible OpenAI CLIP weights are installed by scripts/install_fod_clip.sh.
+# Keep the 337 MiB binary out of ordinary Git history.
+/src/application/autolabor_fod_vision/models/clip/*.pt
+
+# Codex recovery snapshots are local-only working copies.
+/.codex_snapshots/
+
+# Keep the isolated coverage simulation source and reports, but not generated
+# catkin outputs, run pointers, or multi-gigabyte experiment artifacts.
+/coverage_gz_sim_tree/Testing/
+/coverage_gz_sim_tree/results/
+/coverage_gz_sim_tree/runtime/
+/coverage_gz_sim_tree/ws/build/
+/coverage_gz_sim_tree/ws/devel/
+/coverage_gz_sim_navfn_teb_tree/Testing/
+/coverage_gz_sim_navfn_teb_tree/results/
+/coverage_gz_sim_navfn_teb_tree/runtime/
+/coverage_gz_sim_navfn_teb_tree/ws/build/
+/coverage_gz_sim_navfn_teb_tree/ws/devel/
+
+# Perception experiments retain source and manifests; binaries and sensor data
+# are covered by the independent local rollback snapshot, not public GitHub.
+/validation/
+/experiments/**/vendor/
+/experiments/**/models/
+/experiments/**/exports/
+/experiments/**/results/
+/experiments/**/logs/
+/experiments/**/live/
+/experiments/**/inputs/
+/experiments/**/bin/
+/experiments/**/build/
+/experiments/**/*.lock
+/experiments/**/*_current.json
+/frames.pdf
+/frames.gv

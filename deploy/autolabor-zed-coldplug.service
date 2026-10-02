@@ -1,0 +1,15 @@
+[Unit]
+Description=Repair Autolabor USB devices after Jetson coldplug
+After=systemd-udevd.service systemd-udev-trigger.service
+Before=NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/default/autolabor-usb-coldplug
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/local/sbin/autolabor-usb-coldplug
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

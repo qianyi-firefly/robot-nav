@@ -1,0 +1,169 @@
+<launch>
+  <!-- ZED 2 production source for the FOD detector and visual servo. -->
+  <arg name="start_camera" default="false"/>
+  <arg name="serial_number" default="23748636"/>
+  <arg name="camera_name" default="zed2"/>
+  <arg name="node_name" default="zed_node"/>
+  <arg name="cam_pos_x" default="0.0"/>
+  <arg name="cam_pos_y" default="0.0"/>
+  <arg name="cam_pos_z" default="0.0"/>
+  <arg name="cam_roll" default="0.0"/>
+  <arg name="cam_pitch" default="0.0"/>
+  <arg name="cam_yaw" default="0.0"/>
+
+  <arg name="enable_image_quality_controller" default="false"/>
+  <arg name="image_quality_monitor_only" default="false"/>
+  <arg name="image_quality_target_median" default="115.0"/>
+  <arg name="image_quality_exposure_max_percent" default="100.0"/>
+
+  <arg name="backend" default="yolo"/>
+  <!-- LocateAnything is recognition-only. Disable its redundant detector-side
+       45-frame depth history while retaining the 120-frame display history. -->
+  <arg name="enable_detector_depth_fusion"
+       default="$(eval arg('backend') != 'locateanything')"/>
+  <arg name="enable_display_depth" default="true"/>
+  <arg name="weights"
+       default="$(find autolabor_fod_vision)/models/yolo11_gam_best.pt"/>
+  <arg name="expected_model_sha256"
+       default="c9fb0f7996b229999dd9adc72245c991a9ad61b8c3d395cd76ab41e6ec4c3691"/>
+  <arg name="detector_python"
+       default="$(find autolabor_fod_vision)/../../../.venv/fod_yolo/bin/python3"/>
+  <arg name="image_quality_python" default="$(arg detector_python)"/>
+  <arg name="ultralytics_root"
+       default="$(find autolabor_fod_vision)/../../../ultralytics_yolo11_custom"/>
+  <arg name="require_gam" default="true"/>
+  <arg name="runtime_token" default=""/>
+  <arg name="device" default="auto"/>
+  <arg name="image_size" default="640"/>
+  <!-- Expose the complete operator-requested 0.20-0.60 CLIP validation band. -->
+  <arg name="confidence" default="0.20"/>
+  <arg name="iou" default="0.45"/>
+  <arg name="max_detections" default="100"/>
+  <arg name="required_class_names"
+       default="metal,plastic,paper,glass,kitchen_waste"/>
+  <arg name="locateanything_model_root" default="/home/slam/LocateAnything"/>
+  <arg name="locateanything_manifest"
+       default="/home/slam/LocateAnything/.runtime/deployment_manifest.json"/>
+  <arg name="locateanything_worker_python" default="$(arg detector_python)"/>
+  <arg name="two_stage_detector_weights"
+       default="/home/slam/yolo11/detect_classify/detect/trash_yolo11s_gam/best.pt"/>
+  <arg name="two_stage_detector_sha256"
+       default="711b6bb4b4debebcf993f033f23e7e641a02dd279254779f8dafed11b6a79233"/>
+  <arg name="two_stage_classifier_weights"
+       default="/home/slam/yolo11/detect_classify/classify/material_yolo11s_cls/best.pt"/>
+  <arg name="two_stage_classifier_sha256"
+       default="d0cce9310e184e8acd7a6142face16d39aadc9a6e5405b18694346f2315899e9"/>
+
+  <arg name="enable_clip_filter" default="true"/>
+  <arg name="clip_python_root"
+       default="$(find autolabor_fod_vision)/../../../runtime/fod_clip/python"/>
+  <arg name="clip_weights"
+       default="$(find autolabor_fod_vision)/models/clip/ViT-B-32.pt"/>
+  <arg name="clip_expected_model_sha256"
+       default="40d365715913c9da98579312b702a82c18be219cc2a73407c4526f58eba950af"/>
+  <arg name="clip_model_name" default="ViT-B/32"/>
+  <arg name="clip_source_commit"
+       default="d05afc436d78f1c48dc0dbf8e5980a9d471f35f6"/>
+  <arg name="clip_device" default="auto"/>
+  <arg name="clip_warmup" default="true"/>
+  <arg name="clip_low_confidence" default="0.20"/>
+  <arg name="clip_high_confidence" default="0.60"/>
+  <arg name="clip_positive_probability" default="0.50"/>
+  <arg name="clip_crop_padding_fraction" default="0.10"/>
+
+  <!-- Keep metric projection off until the physical ZED mount TF is measured. -->
+  <arg name="enable_projection" default="false"/>
+  <arg name="base_frame" default="base_link"/>
+  <arg name="tracking_frame" default="camera_init"/>
+
+  <group if="$(arg start_camera)">
+    <include file="$(find robot_bringup)/launch/zed2_camera.launch">
+      <arg name="camera_name" value="$(arg camera_name)"/>
+      <arg name="node_name" value="$(arg node_name)"/>
+      <arg name="serial_number" value="$(arg serial_number)"/>
+      <arg name="publish_tf" value="false"/>
+      <arg name="publish_map_tf" value="false"/>
+      <arg name="publish_fod_aliases" value="true"/>
+      <arg name="cam_pos_x" value="$(arg cam_pos_x)"/>
+      <arg name="cam_pos_y" value="$(arg cam_pos_y)"/>
+      <arg name="cam_pos_z" value="$(arg cam_pos_z)"/>
+      <arg name="cam_roll" value="$(arg cam_roll)"/>
+      <arg name="cam_pitch" value="$(arg cam_pitch)"/>
+      <arg name="cam_yaw" value="$(arg cam_yaw)"/>
+    </include>
+  </group>
+
+  <group if="$(arg enable_image_quality_controller)">
+    <node pkg="autolabor_fod_vision"
+          type="fod_image_quality_controller_node.py"
+          name="fod_image_quality_controller"
+          output="screen"
+          launch-prefix="$(arg image_quality_python)"
+          respawn="false">
+      <rosparam command="load"
+                file="$(find autolabor_fod_vision)/config/image_quality_controller.yaml"/>
+      <param name="enabled" value="true"/>
+      <param name="monitor_only" value="$(arg image_quality_monitor_only)"/>
+      <param name="target_median" value="$(arg image_quality_target_median)"/>
+      <param name="exposure_max_percent"
+             value="$(arg image_quality_exposure_max_percent)"/>
+      <param name="dynamic_reconfigure_server"
+             value="/$(arg camera_name)/$(arg node_name)"/>
+    </node>
+  </group>
+
+  <include file="$(find autolabor_fod_vision)/launch/perception.launch">
+    <arg name="start_source" value="false"/>
+    <arg name="backend" value="$(arg backend)"/>
+    <arg name="weights" value="$(arg weights)"/>
+    <arg name="expected_model_sha256" value="$(arg expected_model_sha256)"/>
+    <arg name="detector_python" value="$(arg detector_python)"/>
+    <arg name="ultralytics_root" value="$(arg ultralytics_root)"/>
+    <arg name="require_gam" value="$(arg require_gam)"/>
+    <arg name="runtime_token" value="$(arg runtime_token)"/>
+    <arg name="device" value="$(arg device)"/>
+    <arg name="image_size" value="$(arg image_size)"/>
+    <arg name="confidence" value="$(arg confidence)"/>
+    <arg name="iou" value="$(arg iou)"/>
+    <arg name="max_detections" value="$(arg max_detections)"/>
+    <arg name="smoke_test_only" value="false"/>
+    <arg name="required_class_names" value="$(arg required_class_names)"/>
+    <arg name="locateanything_model_root"
+         value="$(arg locateanything_model_root)"/>
+    <arg name="locateanything_manifest"
+         value="$(arg locateanything_manifest)"/>
+    <arg name="locateanything_worker_python"
+         value="$(arg locateanything_worker_python)"/>
+    <arg name="two_stage_detector_weights"
+         value="$(arg two_stage_detector_weights)"/>
+    <arg name="two_stage_detector_sha256"
+         value="$(arg two_stage_detector_sha256)"/>
+    <arg name="two_stage_classifier_weights"
+         value="$(arg two_stage_classifier_weights)"/>
+    <arg name="two_stage_classifier_sha256"
+         value="$(arg two_stage_classifier_sha256)"/>
+    <arg name="enable_detector_depth_fusion"
+         value="$(arg enable_detector_depth_fusion)"/>
+    <arg name="enable_display_depth" value="$(arg enable_display_depth)"/>
+    <arg name="depth_topic" value="/fod_camera/depth_registered"/>
+    <arg name="enable_clip_filter" value="$(arg enable_clip_filter)"/>
+    <arg name="clip_python_root" value="$(arg clip_python_root)"/>
+    <arg name="clip_weights" value="$(arg clip_weights)"/>
+    <arg name="clip_expected_model_sha256"
+         value="$(arg clip_expected_model_sha256)"/>
+    <arg name="clip_model_name" value="$(arg clip_model_name)"/>
+    <arg name="clip_source_commit" value="$(arg clip_source_commit)"/>
+    <arg name="clip_device" value="$(arg clip_device)"/>
+    <arg name="clip_warmup" value="$(arg clip_warmup)"/>
+    <arg name="clip_low_confidence" value="$(arg clip_low_confidence)"/>
+    <arg name="clip_high_confidence" value="$(arg clip_high_confidence)"/>
+    <arg name="clip_positive_probability"
+         value="$(arg clip_positive_probability)"/>
+    <arg name="clip_crop_padding_fraction"
+         value="$(arg clip_crop_padding_fraction)"/>
+    <arg name="enable_projection" value="$(arg enable_projection)"/>
+    <arg name="base_frame" value="$(arg base_frame)"/>
+    <arg name="tracking_frame" value="$(arg tracking_frame)"/>
+    <arg name="allowed_class_names" value="$(arg required_class_names)"/>
+  </include>
+</launch>

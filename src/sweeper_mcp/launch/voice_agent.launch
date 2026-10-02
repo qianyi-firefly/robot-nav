@@ -1,0 +1,5 @@
+<launch>
+  <!-- Backward-compatible name. Credentials are never uploaded to rosparam;
+       interaction is only accepted from the authorised Qt session. -->
+  <include file="$(find sweeper_mcp)/launch/ai_control.launch"/>
+</launch>
